@@ -1,0 +1,3 @@
+#!C:\Users\jgallardo\Desktop\project\personal\backend\venv\Scripts\python.exe
+from reindent import main
+main()
