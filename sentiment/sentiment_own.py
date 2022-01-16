@@ -3,11 +3,14 @@ from itertools import count
 from ntpath import join
 import re
 from sys import api_version
+from time import perf_counter
 from tracemalloc import stop
 import tweepy
 from tweepy import OAuthHandler
 from textblob import TextBlob
 import os
+import string
+from wordcloud import STOPWORDS
 
 class TwitterClient(object):
     #Generic Twitter Class for sentiment analysis
@@ -27,8 +30,30 @@ class TwitterClient(object):
             print("Error: Authentication Failed")
             
     def clean_tweet(self,tweet):
-        tweet = ' '.join(re.sub("RT","",tweet).split())
-        return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)"," ",tweet).split())
+        stopwords = set(STOPWORDS)
+        tweet = tweet.lower()
+        tweet = re.sub("rt @[A-Za-z0-9_]+","", tweet)
+        tweet = re.sub("@[A-Za-z0-9_]+","", tweet)
+        tweet = re.sub("#[A-Za-z0-9_]+","", tweet)
+        tweet = re.sub(r"http\S+", "", tweet)
+        tweet = re.sub(r"www.\S+", "", tweet)
+        tweet = re.sub(r"won\'t", "will not", tweet)
+        tweet = re.sub(r"can\'t", "can not", tweet)
+        tweet = re.sub(r"n\'t", " not", tweet)
+        tweet = re.sub(r"\'re", " are", tweet)
+        tweet = re.sub(r"\'s", " is", tweet)
+        tweet = re.sub(r"\'d", " would", tweet)
+        tweet = re.sub(r"\'ll", " will", tweet)
+        tweet = re.sub(r"\'t", " not", tweet)
+        tweet = re.sub(r"\'ve", " have", tweet)
+        tweet = re.sub(r"\'m", " am", tweet)
+        tweet = re.sub('[()!?]', ' ', tweet)
+        tweet = re.sub('\[.*?\]',' ', tweet)
+        tweet = re.sub("[^a-z0-9]"," ", tweet)
+        tweet = tweet.split()
+        tweet = [w for w in tweet if not w in stopwords]
+        tweet = " ".join(word for word in tweet)
+        return tweet
 
     def get_tweet_sentiment(self,tweet):
         analysis = TextBlob(self.clean_tweet(tweet))
@@ -39,10 +64,10 @@ class TwitterClient(object):
         else:
             return 'negative'
     
-    def get_tweets(self,query,count):
+    def get_tweets(self,query):
         tweets = []
         try:
-            fetched_tweets = self.api.search_tweets(q = query, count = count)
+            fetched_tweets = tweepy.Cursor(self.api.search_tweets, q=query, lang = "en").items(300)
             for tweet in fetched_tweets:
                 parsed_tweet = {}
                 parsed_tweet['text'] = tweet.text
@@ -54,7 +79,7 @@ class TwitterClient(object):
                 else:
                     tweets.append(parsed_tweet)
             return tweets
-        except tweepy.errors.TweepError as e:
+        except tweepy.errors.TweepyException as e:
             print("Error: "+ str(e))
 
 class percentages:
@@ -68,18 +93,20 @@ class percentages:
 
 def sentimentCalc(query):
     api = TwitterClient()
-    tweets = api.get_tweets(query=query, count = 200)
+    tweets = api.get_tweets(query=query)
     ptweets = [tweet for tweet in tweets if tweet['sentiment']=='positive']
     ntweets = [tweet for tweet in tweets if tweet['sentiment']=='negative']
     netweets = [tweet for tweet in tweets if tweet['sentiment']=='neutral']
-    pwords = ''
+    pwords_array = []
     for tweet in ptweets:
-        pwords += api.clean_tweet(tweet['text'])
-        pwords += ' '
+        pwords_array += api.clean_tweet(tweet['text']).split()
+    pfreq = [pwords_array.count(i) for i in pwords_array]
+    pwords = dict(zip(pwords_array,pfreq))
 
-    nwords = ''
+    nwords_array = []
     for tweet in ntweets:
-        nwords += api.clean_tweet(tweet['text'])
-        nwords += ' '
+        nwords_array += api.clean_tweet(tweet['text']).split()
+    nfreq = [nwords_array.count(i) for i in nwords_array]
+    nwords = dict(zip(nwords_array,nfreq))
 
     return percentages(100*len(ptweets)/len(tweets),100*len(ntweets)/len(tweets),100*len(netweets)/len(tweets),pwords,nwords)
