@@ -104,7 +104,8 @@ def sentimentCalc(query):
     pwords_dict = dict(zip(pwords_array,pfreq))
     pwords = []
     for key in pwords_dict:
-        pwords.append({'text':key,'value':pwords_dict[key]})
+        if key not in query:
+            pwords.append({'text':key,'value':pwords_dict[key]})
 
     nwords_array = []
     for tweet in ntweets:
@@ -113,6 +114,7 @@ def sentimentCalc(query):
     nwords_dict = dict(zip(nwords_array,nfreq))
     nwords = []
     for key in nwords_dict:
-        nwords.append({'text':key,'value':nwords_dict[key]})
+        if key not in query:
+            nwords.append({'text':key,'value':nwords_dict[key]})
 
     return percentages(100*len(ptweets)/len(tweets),100*len(ntweets)/len(tweets),100*len(netweets)/len(tweets),pwords,nwords)
