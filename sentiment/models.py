@@ -8,8 +8,8 @@ class sentiment(models.Model):
     positive = models.FloatField(null=True, blank=True)
     negative = models.FloatField(null=True, blank=True)
     neutral = models.FloatField(null=True, blank=True)
-    wordcloud_neg = models.TextField(null=True,blank=True) 
-    wordcloud_pos = models.TextField(null=True,blank=True) 
+    wordcloud_neg = models.JSONField(null=True,blank=True) 
+    wordcloud_pos = models.JSONField(null=True,blank=True) 
 
     class Meta:
         ordering=('-created_at',)
