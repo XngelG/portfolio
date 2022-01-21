@@ -81,6 +81,23 @@ class TwitterClient(object):
             return tweets
         except tweepy.errors.TweepyException as e:
             print("Error: "+ str(e))
+    
+    def fetchTrends(self):
+        location = [{'name': 'New York', 'placeType': {'code': 7, 'name': 'Town'}, 'url': 'http://where.yahooapis.com/v1/place/2459115', 'parentid': 23424977, 'country': 'United States', 'woeid': 2459115, 'countryCode': 'US'}]
+        complete_trendlist = self.api.get_place_trends(2459115)[0]['trends']
+        for i in range(0,len(complete_trendlist)):
+            if complete_trendlist[i]['tweet_volume'] is None:
+                complete_trendlist[i]['tweet_volume'] = 0  
+        complete_trendlist = [dict(t) for t in {tuple(d.items()) for d in complete_trendlist}]
+        complete_trendlist = sorted(complete_trendlist, key=lambda d: d['tweet_volume'], reverse=True)
+        trendlist = []
+        for i in range(0,len(complete_trendlist)):
+            if complete_trendlist[i]['promoted_content'] is None:
+                trendlist.append(complete_trendlist[i]['name'])
+            if len(trendlist)==5:
+                break
+        return trendlist
+        
 
 class percentages:
     def __init__(self,positive,negative,neutral,pwords,nwords):
@@ -118,3 +135,7 @@ def sentimentCalc(query):
             nwords.append({'text':key,'value':nwords_dict[key]})
 
     return percentages(100*len(ptweets)/len(tweets),100*len(ntweets)/len(tweets),100*len(netweets)/len(tweets),pwords,nwords)
+
+def fetchTrendingtopics():
+    api = TwitterClient()
+    return api.fetchTrends()
