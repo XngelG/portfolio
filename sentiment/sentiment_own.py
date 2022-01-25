@@ -12,6 +12,7 @@ import os
 import string
 from wordcloud import STOPWORDS
 import snscrape.modules.twitter as sntwitter
+from langdetect import detect
 
 class TwitterClient(object):
     #Generic Twitter Class for sentiment analysis
@@ -71,12 +72,17 @@ class TwitterClient(object):
         try:
             i=0
             for tweet in sntwitter.TwitterSearchScraper(query).get_items():
-                parsed_tweet = {}
-                parsed_tweet['text'] = tweet.content
-                parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.content)
-                if parsed_tweet not in tweets:
-                    tweets.append(parsed_tweet)
-                    i+=1
+                try:
+                    lan = detect(tweet.content)
+                except:
+                    lan = 'error'
+                if lan == 'en':
+                    parsed_tweet = {}
+                    parsed_tweet['text'] = tweet.content
+                    parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.content)
+                    if parsed_tweet not in tweets:
+                        tweets.append(parsed_tweet)
+                        i+=1
                 if i>=maxTweets:
                     break
             return tweets
