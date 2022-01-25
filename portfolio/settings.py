@@ -26,7 +26,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['portfoliofrontendxngelgt.herokuapp.com']
 
 
 # Application definition
@@ -64,9 +64,9 @@ MIDDLEWARE = [
 ROOT_URLCONF = 'portfolio.urls'
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://portfoliofrontendxngelgt.herokuapp.com/",
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://portfoliofrontendxngelgt.herokuapp.com',
 ]
 
 TEMPLATES = [
