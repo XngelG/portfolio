@@ -8,6 +8,8 @@ from tracemalloc import stop
 import tweepy
 from tweepy import OAuthHandler
 from textblob import TextBlob
+import textblob
+from textblob.sentiments import NaiveBayesAnalyzer
 import os
 import string
 from wordcloud import STOPWORDS
@@ -30,6 +32,7 @@ class TwitterClient(object):
             self.api = tweepy.API(self.auth,wait_on_rate_limit=True)
         except:
             print("Error: Authentication Failed")
+        self.tb = textblob.Blobber(analyzer=NaiveBayesAnalyzer())
             
     def clean_tweet(self,tweet):
         stopwords = set(STOPWORDS)
@@ -58,13 +61,13 @@ class TwitterClient(object):
         return tweet
 
     def get_tweet_sentiment(self,tweet):
-        analysis = TextBlob(self.clean_tweet(tweet))
-        if analysis.sentiment.polarity > 0:
+        analysis = self.tb(self.clean_tweet(tweet))
+        if analysis.sentiment.classification == 'pos':
             return 'positive'
-        elif analysis.sentiment.polarity == 0:
-            return 'neutral'
-        else:
+        elif analysis.sentiment.classification == 'neg':
             return 'negative'
+        else:
+            return 'neutral'
     
     def get_tweets(self,query):
         tweets = []
