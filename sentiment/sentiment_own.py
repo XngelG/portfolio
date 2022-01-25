@@ -11,6 +11,7 @@ from textblob import TextBlob
 import os
 import string
 from wordcloud import STOPWORDS
+import snscrape.modules.twitter as sntwitter
 
 class TwitterClient(object):
     #Generic Twitter Class for sentiment analysis
@@ -66,21 +67,21 @@ class TwitterClient(object):
     
     def get_tweets(self,query):
         tweets = []
+        maxTweets = 500
         try:
-            fetched_tweets = tweepy.Cursor(self.api.search_tweets, q=query, lang = "en").items(300)
-            for tweet in fetched_tweets:
+            i=0
+            for tweet in sntwitter.TwitterSearchScraper(query).get_items():
                 parsed_tweet = {}
-                parsed_tweet['text'] = tweet.text
-                parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.text)
-
-                if tweet.retweet_count > 0:
-                    if parsed_tweet not in tweets:
-                        tweets.append(parsed_tweet)
-                else:
+                parsed_tweet['text'] = tweet.content
+                parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.content)
+                if parsed_tweet not in tweets:
                     tweets.append(parsed_tweet)
+                    i+=1
+                if i>=maxTweets:
+                    break
             return tweets
-        except tweepy.errors.TweepyException as e:
-            print("Error: "+ str(e))
+        except:
+            print("Error")
     
     def fetchTrends(self):
         location = [{'name': 'New York', 'placeType': {'code': 7, 'name': 'Town'}, 'url': 'http://where.yahooapis.com/v1/place/2459115', 'parentid': 23424977, 'country': 'United States', 'woeid': 2459115, 'countryCode': 'US'}]
