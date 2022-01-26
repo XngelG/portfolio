@@ -8,8 +8,6 @@ from tracemalloc import stop
 import tweepy
 from tweepy import OAuthHandler
 from textblob import TextBlob
-import textblob
-from textblob.sentiments import NaiveBayesAnalyzer
 import os
 import string
 from wordcloud import STOPWORDS
@@ -32,7 +30,6 @@ class TwitterClient(object):
             self.api = tweepy.API(self.auth,wait_on_rate_limit=True)
         except:
             print("Error: Authentication Failed")
-        self.tb = textblob.Blobber(analyzer=NaiveBayesAnalyzer())
             
     def clean_tweet(self,tweet):
         stopwords = set(STOPWORDS)
@@ -61,36 +58,42 @@ class TwitterClient(object):
         return tweet
 
     def get_tweet_sentiment(self,tweet):
-        analysis = self.tb(self.clean_tweet(tweet))
-        if analysis.sentiment.classification == 'pos':
+        analysis = TextBlob(self.clean_tweet(tweet))
+        if analysis.sentiment.polarity > 0:
             return 'positive'
-        elif analysis.sentiment.classification == 'neg':
-            return 'negative'
-        else:
+        elif analysis.sentiment.polarity == 0:
             return 'neutral'
+        else:
+            return 'negative'
     
     def get_tweets(self,query):
         tweets = []
         maxTweets = 500
         try:
-            i=0
+            i = 0
             for tweet in sntwitter.TwitterSearchScraper(query).get_items():
                 try:
                     lan = detect(tweet.content)
                 except:
                     lan = 'error'
-                if lan == 'en':
-                    parsed_tweet = {}
-                    parsed_tweet['text'] = tweet.content
-                    parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.content)
-                    if parsed_tweet not in tweets:
-                        tweets.append(parsed_tweet)
-                        i+=1
+                print(lan)
+                if lan == 'es' or lan == 'ger' or lan == 'fr' or lan == 'pt':
+                    blob = TextBlob(tweet.content)
+                    tweet.content = str(blob.translate(from_lang=lan, to='en'))
+                print(tweet.content)
+                           
+                parsed_tweet = {}
+                parsed_tweet['text'] = tweet.content
+                parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.content)
+                if parsed_tweet not in tweets:
+                    tweets.append(parsed_tweet)
+                    i+=1
+
                 if i>=maxTweets:
                     break
             return tweets
         except:
-            print("Error")
+            print("Error fetching tweet")
     
     def fetchTrends(self):
         location = [{'name': 'New York', 'placeType': {'code': 7, 'name': 'Town'}, 'url': 'http://where.yahooapis.com/v1/place/2459115', 'parentid': 23424977, 'country': 'United States', 'woeid': 2459115, 'countryCode': 'US'}]
