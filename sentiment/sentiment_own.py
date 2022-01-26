@@ -68,26 +68,29 @@ class TwitterClient(object):
     
     def get_tweets(self,query):
         tweets = []
-        maxTweets = 500
+        maxTweets = 300
         try:
             i = 0
             for tweet in sntwitter.TwitterSearchScraper(query).get_items():
-                try:
-                    lan = detect(tweet.content)
-                except:
-                    lan = 'error'
-                print(lan)
-                if lan == 'es' or lan == 'ger' or lan == 'fr' or lan == 'pt':
-                    blob = TextBlob(tweet.content)
-                    tweet.content = str(blob.translate(from_lang=lan, to='en'))
-                print(tweet.content)
-                           
-                parsed_tweet = {}
-                parsed_tweet['text'] = tweet.content
-                parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.content)
-                if parsed_tweet not in tweets:
-                    tweets.append(parsed_tweet)
-                    i+=1
+                if not tweet.lang == 'en' and not tweet.lang=='und':
+                    try:
+                        blob = TextBlob(tweet.content)
+                        tweet.content = str(blob.translate(from_lang=lan, to='en'))
+                        parsed_tweet = {}
+                        parsed_tweet['text'] = tweet.content
+                        parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.content)
+                        if parsed_tweet not in tweets:
+                            tweets.append(parsed_tweet)
+                            i+=1
+                    except:
+                        pass
+                elif not tweet.lang=='und':
+                    parsed_tweet = {}
+                    parsed_tweet['text'] = tweet.content
+                    parsed_tweet['sentiment'] = self.get_tweet_sentiment(tweet.content)
+                    if parsed_tweet not in tweets:
+                        tweets.append(parsed_tweet)
+                        i+=1
 
                 if i>=maxTweets:
                     break
