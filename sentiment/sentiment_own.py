@@ -68,7 +68,7 @@ class TwitterClient(object):
     
     def get_tweets(self,query):
         tweets = []
-        maxTweets = 300
+        maxTweets = 500
         try:
             i = 0
             for tweet in sntwitter.TwitterSearchScraper(query).get_items():
